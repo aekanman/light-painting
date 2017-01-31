@@ -31,7 +31,6 @@ int main(int argc, char** argv)
 {
 	return StaticPhotoContourDetection();
 	return 0;
-
 }
 
 int VideoStreamColourTracking()
@@ -84,8 +83,6 @@ int VideoStreamColourTracking()
 
 		bool bSuccess = cap.read(imgOriginal); // read a new frame from video
 
-
-
 		if (!bSuccess) //if not success, break loop
 		{
 			cout << "Cannot read a frame from video stream" << endl;
@@ -99,8 +96,7 @@ int VideoStreamColourTracking()
 		Mat imgThresholded;
 
 		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-
-																									  //morphological opening (removes small objects from the foreground)
+																						  //morphological opening (removes small objects from the foreground)
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
 		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
 
@@ -159,7 +155,6 @@ int VideoStreamColourTracking()
 			imgLines = Mat::zeros(imgTmp.size(), CV_8UC3);;
 			cout << "cleared" << endl;
 		}
-
 	}
 
 	return 0;
@@ -263,9 +258,6 @@ int VideoStreamColourTrackingNewControl()
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
 			int posY = dM01 / dArea;
-
-			//waypoints.push_back(pair<double, double>((double)posX/imgOriginal.size().width, (double)posY / imgOriginal.size().height));
-
 			if (iLastX >= 0 && iLastY >= 0 && posX >= 0 && posY >= 0)
 			{
 				if (draw != 0)
@@ -276,7 +268,6 @@ int VideoStreamColourTrackingNewControl()
 					waypoints.push_back(pair<double, double>((double)posX / imgOriginal.size().width, (double)posY / imgOriginal.size().height));
 				}
 			}
-
 			iLastX = posX;
 			iLastY = posY;
 		}
@@ -299,7 +290,6 @@ int VideoStreamColourTrackingNewControl()
 			waypoints.clear();
 			numPoints = 0;
 		}
-
 		cout << numFrames << endl;
 		numFrames++;
 
@@ -311,8 +301,6 @@ int VideoStreamColourTrackingNewControl()
 	{
 		for (int i = 0; i < waypoints.size(); i++)
 		{
-
-
 			waypointsFile << waypoints[i].first << "," << waypoints[i].second << endl;
 		}
 		waypointsFile.close();
@@ -364,14 +352,10 @@ int VideoStreamColourDetection()
 		}
 
 		Mat imgHSV;
-
-		cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
-
 		Mat imgThresholded;
-
-		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-
 		Mat imgMasked;
+		cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
+		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
 
 		//morphological opening (remove small objects from the foreground)
 		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));

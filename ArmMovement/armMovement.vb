@@ -28,14 +28,9 @@ Public Class Test_NumReg2
                 mobjRobot.Connect(txtHostName.Text)
                 mobjRegs = mobjRobot.RegNumerics
 
-
-
-
                 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 'MAIN LOOP'
                 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 
                 '' move to Ready
                 ''If mobjRobot.RegNumerics(2).value.reglong = 1 Then
@@ -52,7 +47,6 @@ Public Class Test_NumReg2
                 Do Until (fileReader.EndOfStream)
 
                     stringReader = fileReader.ReadLine()
-
 
                     Dim parts As String() = stringReader.Split(New Char(), ","c)
                     Dim x1 As Short = Convert.ToDouble(parts(0))
@@ -100,9 +94,6 @@ Public Class Test_NumReg2
                 ''Zero the Register Values before disconnecting!
                 zeroRegs()
 
-
-
-
             Else    ' must be the user wants to disconnect
 
                 txtRegValue.Text = "Releasing the Robot objects"
@@ -127,10 +118,6 @@ Public Class Test_NumReg2
 
     End Sub
 
-
-
-
-
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -151,8 +138,6 @@ Public Class Test_NumReg2
         '' DH to Fanuc Conversion:
         Dim s, r, D, phi As Double
 
-
-
         th1 = Atan2(y, x)
         s = z
         r = Sqrt(x ^ 2 + y ^ 2)
@@ -163,7 +148,6 @@ Public Class Test_NumReg2
         th4 = (pi / 2) - th2 - th3
         th5 = alpha - th1
 
-
         s = z
         r = Sqrt(Pow(x, 2) + Pow(y, 2))
         D = (Pow(s, 2) + Pow(r, 2) - Pow(link2, 2) - Pow(link3, 2)) / (2 * link2 * link3)
@@ -172,18 +156,11 @@ Public Class Test_NumReg2
         th3 = Atan2(-Sqrt(1 - Pow(D, 2)), D)
         th2 = Atan2(s, r) - Atan2(link3 * Sin(th3), link2 + link3 * Cos(th3))
 
-
-
-
-
         th1f = th1
         th2f = (pi / 2) - th2
         th3f = th2 + th3 - (4 * pi / 180)
         th4f = 0
         th5f = alpha * pi / 180 - th1f
-
-
-
 
         '' Radian to Degree Conversion:
         th1f = th1f * 180 / pi
@@ -202,8 +179,6 @@ Public Class Test_NumReg2
         Return outIK
 
     End Function
-
-
 
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -242,8 +217,6 @@ Public Class Test_NumReg2
 
     End Sub
 
-
-
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     '' Zero the Register Values
     Private Sub zeroRegs()
@@ -252,8 +225,6 @@ Public Class Test_NumReg2
             mobjRobot.RegNumerics(counterZR).Value.RegLong = 0
         Next counterZR
     End Sub
-
-
 
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,8 +247,6 @@ Public Class Test_NumReg2
 
         Return Nothing
     End Function
-
-
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         '
