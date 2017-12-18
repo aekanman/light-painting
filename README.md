@@ -19,4 +19,8 @@ Final) z<br />![Alt text](/img/light.gif "Final")<br /><br />
 ### Results <br />
 Heart <br />![Alt text](/img/heart1.png) ![Alt text](/img/heart2.png)<br />
 Spiral <br />![Alt text](/img/spiral1.png) ![Alt text](/img/spiral2.png)<br />
-Z <br />![Alt text](/img/z1.png) ![Alt text](/img/z2.png)<br />
+Z <br />![Alt text](/img/z1.png) ![Alt text](/img/z2.png)<br /><br /><br />
+
+
+## License
+MIT © [Atakan Efe Kanman](https://atakanefekanman.com)
