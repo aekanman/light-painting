@@ -23,4 +23,4 @@ Z <br />![Alt text](/img/z1.png) ![Alt text](/img/z2.png)<br /><br /><br />
 
 
 ## License
-MIT © [Atakan Efe Kanman](https://atakanefekanman.com)
+MIT © [Atakan Efe Kanman](http://atakanefekanman.com)
