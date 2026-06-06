@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 2.8)
+project( object_det )
+find_package( OpenCV )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+add_executable( object_det object_detection_test.cpp )
+target_link_libraries( object_det ${OpenCV_LIBS} )

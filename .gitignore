@@ -1,0 +1,30 @@
+.DS_Store
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+Makefile
+cmake_install.cmake
+
+# Visual Studio generated files
+.vs/
+ipch/
+Debug/
+Release/
+x64/
+*.VC.db
+*.suo
+*.user
+*.obj
+*.pch
+*.pdb
+*.idb
+*.ilk
+*.exe
+*.log
+*.tlog
+*.lastbuildstate
+
+# Generated waypoint/output files
+waypoints.txt
+path.txt
