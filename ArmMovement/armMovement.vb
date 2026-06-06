@@ -8,6 +8,19 @@ Public Class Test_NumReg2
     ' Declarations
     '
 
+    Private Const WaypointPath As String = "C:\Users\Admin\Desktop\G11\160123_IK\MoveWithReg_4\path.txt"
+    Private Const CommandRegister As Integer = 1
+    Private Const StatusRegister As Integer = 2
+    Private Const LinearSpeedRegister As Integer = 10
+    Private Const JointSpeedRegister As Integer = 20
+    Private Const ReadyStatus As Integer = 1
+    Private Const HomeCommand As Integer = 1
+    Private Const JointMoveCommand As Integer = 4
+    Private Const EndMotionCommand As Integer = 99
+    Private Const DefaultToolAngle As Double = 45
+    Private Const DefaultJointSpeed As Double = 20
+    Private Const RobotPollMs As Integer = 200
+
     '   Public Class NumRegTest
 
     Private mobjRobot As FRRobot.FRCRobot
@@ -42,7 +55,7 @@ Public Class Test_NumReg2
                 ''System.Threading.Thread.Sleep(200)
                 ''End While
                 ''End If
-                fileReader = My.Computer.FileSystem.OpenTextFileReader("C:\Users\Admin\Desktop\G11\160123_IK\MoveWithReg_4\path.txt")
+                fileReader = My.Computer.FileSystem.OpenTextFileReader(WaypointPath)
                 Dim stringReader As String
                 Do Until (fileReader.EndOfStream)
 
@@ -54,19 +67,19 @@ Public Class Test_NumReg2
                     Dim z1 As Short = Convert.ToDouble(parts(2))
 
                     '' MOVE TO JOINT COORDINATES
-                    If mobjRobot.RegNumerics(2).Value.RegLong = 1 Then
+                    If mobjRobot.RegNumerics(StatusRegister).Value.RegLong = ReadyStatus Then
 
                         Dim IKxyz(3) As Double
-                        IKxyz = invKin(x1, y1, z1, 45)
+                        IKxyz = invKin(x1, y1, z1, DefaultToolAngle)
 
                         '' theta1, theta2, theta3, theta4, theta5, speed (percent)
-                        moveJnt(IKxyz(1), IKxyz(2), IKxyz(3), IKxyz(4), IKxyz(5), 20)
+                        moveJnt(IKxyz(1), IKxyz(2), IKxyz(3), IKxyz(4), IKxyz(5), DefaultJointSpeed)
                         ''moveJnt(15, 30, 0, 0, 0, 20)
 
-                        mobjRobot.RegNumerics(1).Value.RegLong = 4
-                        mobjRobot.RegNumerics(2).Value.RegLong = 0
-                        While mobjRobot.RegNumerics(2).Value.RegLong = 0
-                            System.Threading.Thread.Sleep(200)
+                        mobjRobot.RegNumerics(CommandRegister).Value.RegLong = JointMoveCommand
+                        mobjRobot.RegNumerics(StatusRegister).Value.RegLong = 0
+                        While mobjRobot.RegNumerics(StatusRegister).Value.RegLong = 0
+                            System.Threading.Thread.Sleep(RobotPollMs)
                         End While
                     End If
 
@@ -74,21 +87,21 @@ Public Class Test_NumReg2
 
 
                 '' move to Home
-                If mobjRobot.RegNumerics(2).value.reglong = 1 Then
+                If mobjRobot.RegNumerics(StatusRegister).value.reglong = ReadyStatus Then
 
-                    mobjRobot.RegNumerics(1).value.reglong = 1
-                    mobjRobot.RegNumerics(2).value.reglong = 0
+                    mobjRobot.RegNumerics(CommandRegister).value.reglong = HomeCommand
+                    mobjRobot.RegNumerics(StatusRegister).value.reglong = 0
 
-                    While mobjRobot.RegNumerics(2).value.reglong = 0
-                        System.Threading.Thread.Sleep(200)
+                    While mobjRobot.RegNumerics(StatusRegister).value.reglong = 0
+                        System.Threading.Thread.Sleep(RobotPollMs)
                     End While
                 End If
 
 
                 '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 ''End the motion by setting R(1) to 99
-                mobjRobot.RegNumerics(1).Value.RegLong = 99
-                mobjRobot.RegNumerics(2).Value.RegLong = 0
+                mobjRobot.RegNumerics(CommandRegister).Value.RegLong = EndMotionCommand
+                mobjRobot.RegNumerics(StatusRegister).Value.RegLong = 0
                 System.Threading.Thread.Sleep(2000)
 
                 ''Zero the Register Values before disconnecting!
@@ -191,14 +204,14 @@ Public Class Test_NumReg2
     '' LINEAR MOTION FUNCTION
     Private Sub moveLin(xLin As Double, yLin As Double, zLin As Double, wLin As Double, pLin As Double, rLin As Double, speedLin As Double)
         '' POINT1
-        mobjRobot.RegNumerics(11).Value.RegLong = xLin     '' Point1 x-axis
-        mobjRobot.RegNumerics(12).Value.RegLong = yLin     '' Point1 y-axis
-        mobjRobot.RegNumerics(13).Value.RegLong = zLin     '' Point1 z-axis
-        mobjRobot.RegNumerics(14).Value.RegLong = wLin     '' Point1 w-aangle
-        mobjRobot.RegNumerics(15).Value.RegLong = pLin     '' Point1 p-angle
-        mobjRobot.RegNumerics(16).Value.RegLong = rLin     '' Point1 r-angle
+        mobjRobot.RegNumerics(LinearSpeedRegister + 1).Value.RegLong = xLin     '' Point1 x-axis
+        mobjRobot.RegNumerics(LinearSpeedRegister + 2).Value.RegLong = yLin     '' Point1 y-axis
+        mobjRobot.RegNumerics(LinearSpeedRegister + 3).Value.RegLong = zLin     '' Point1 z-axis
+        mobjRobot.RegNumerics(LinearSpeedRegister + 4).Value.RegLong = wLin     '' Point1 w-aangle
+        mobjRobot.RegNumerics(LinearSpeedRegister + 5).Value.RegLong = pLin     '' Point1 p-angle
+        mobjRobot.RegNumerics(LinearSpeedRegister + 6).Value.RegLong = rLin     '' Point1 r-angle
         '%%%%%%%%
-        mobjRobot.RegNumerics(10).Value.RegLong = speedLin
+        mobjRobot.RegNumerics(LinearSpeedRegister).Value.RegLong = speedLin
 
     End Sub
 
@@ -207,13 +220,13 @@ Public Class Test_NumReg2
     '' JOINT MOTION FUNCTION
     Private Sub moveJnt(theta1 As Double, theta2 As Double, theta3 As Double, theta4 As Double, theta5 As Double, speedJnt As Double)
         '' POINT1
-        mobjRobot.RegNumerics(21).Value.RegLong = theta1     '' Point1 x-axis
-        mobjRobot.RegNumerics(22).Value.RegLong = theta2     '' Point1 y-axis
-        mobjRobot.RegNumerics(23).Value.RegLong = theta3     '' Point1 z-axis
-        mobjRobot.RegNumerics(24).Value.RegLong = theta4     '' Point1 w-aangle
-        mobjRobot.RegNumerics(25).Value.RegLong = theta5     '' Point1 p-angle
+        mobjRobot.RegNumerics(JointSpeedRegister + 1).Value.RegLong = theta1     '' Point1 x-axis
+        mobjRobot.RegNumerics(JointSpeedRegister + 2).Value.RegLong = theta2     '' Point1 y-axis
+        mobjRobot.RegNumerics(JointSpeedRegister + 3).Value.RegLong = theta3     '' Point1 z-axis
+        mobjRobot.RegNumerics(JointSpeedRegister + 4).Value.RegLong = theta4     '' Point1 w-aangle
+        mobjRobot.RegNumerics(JointSpeedRegister + 5).Value.RegLong = theta5     '' Point1 p-angle
         '%%%%%%%%
-        mobjRobot.RegNumerics(20).Value.RegLong = speedJnt
+        mobjRobot.RegNumerics(JointSpeedRegister).Value.RegLong = speedJnt
 
     End Sub
 
@@ -250,12 +263,10 @@ Public Class Test_NumReg2
 
     Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
         '
-        mobjRobot.RegNumerics(1).Value.RegLong = txtRegValue.Text
+        mobjRobot.RegNumerics(CommandRegister).Value.RegLong = txtRegValue.Text
     End Sub
 
     Private Sub Test_NumReg2_Load(sender As Object, e As EventArgs) Handles MyBase.Load
 
     End Sub
 End Class
-
-

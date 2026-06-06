@@ -1,19 +1,37 @@
 // object_detection_test.cpp : Defines the entry point for the console application.
 //
 
-#include "stdafx.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <fstream>
 #include <string.h>
 #include <time.h>
-#include "opencv2/highgui/highgui.hpp"
-#include "opencv2/imgproc/imgproc.hpp"
+#include "highgui/highgui.hpp"
+#include "imgproc/imgproc.hpp"
 
 using namespace cv;
 using namespace std;
+
+namespace
+{
+	const int kCameraIndex = 1;
+	const int kTrackingAreaThreshold = 1000000;
+	const int kStaticAreaThreshold = 10000;
+	const char* kControlWindow = "Control";
+	const char* kDrawingControlWindow = "Drawing Control";
+	const char* kWaypointFile = "waypoints.txt";
+
+	void CleanThresholdMask(Mat& mask)
+	{
+		Mat kernel = getStructuringElement(MORPH_ELLIPSE, Size(5, 5));
+
+		erode(mask, mask, kernel);
+		dilate(mask, mask, kernel);
+		dilate(mask, mask, kernel);
+		erode(mask, mask, kernel);
+	}
+}
 
 int VideoStreamColourDetection();
 int StaticPhotoColourDetection();
@@ -35,7 +53,7 @@ int main(int argc, char** argv)
 
 int VideoStreamColourTracking()
 {
-	VideoCapture cap(1); //capture the video from webcam
+	VideoCapture cap(kCameraIndex); //capture the video from webcam
 
 	if (!cap.isOpened())  // if not success, exit program
 	{
@@ -43,7 +61,7 @@ int VideoStreamColourTracking()
 		return -1;
 	}
 
-	namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	namedWindow(kControlWindow, CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
 	int iLowH = 147;
 	int iHighH = 179;
@@ -55,14 +73,14 @@ int VideoStreamColourTracking()
 	int iHighV = 255;
 
 	//Create trackbars in "Control" window
-	createTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-	createTrackbar("HighH", "Control", &iHighH, 179);
+	createTrackbar("LowH", kControlWindow, &iLowH, 179); //Hue (0 - 179)
+	createTrackbar("HighH", kControlWindow, &iHighH, 179);
 
-	createTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-	createTrackbar("HighS", "Control", &iHighS, 255);
+	createTrackbar("LowS", kControlWindow, &iLowS, 255); //Saturation (0 - 255)
+	createTrackbar("HighS", kControlWindow, &iHighS, 255);
 
-	createTrackbar("LowV", "Control", &iLowV, 255);//Value (0 - 255)
-	createTrackbar("HighV", "Control", &iHighV, 255);
+	createTrackbar("LowV", kControlWindow, &iLowV, 255);//Value (0 - 255)
+	createTrackbar("HighV", kControlWindow, &iHighV, 255);
 
 	int iLastX = -1;
 	int iLastY = -1;
@@ -96,13 +114,7 @@ int VideoStreamColourTracking()
 		Mat imgThresholded;
 
 		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-																						  //morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-
-		//morphological closing (removes small holes from the foreground)
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+		CleanThresholdMask(imgThresholded);
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -111,8 +123,8 @@ int VideoStreamColourTracking()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		// if the area <= 10000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-		if (dArea > 1000000)
+		// Ignore tiny regions caused by noise.
+		if (dArea > kTrackingAreaThreshold)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
@@ -162,7 +174,7 @@ int VideoStreamColourTracking()
 
 int VideoStreamColourTrackingNewControl()
 {
-	VideoCapture cap(1); //capture the video from webcam
+	VideoCapture cap(kCameraIndex); //capture the video from webcam
 
 	if (!cap.isOpened())  // if not success, exit program
 	{
@@ -170,8 +182,8 @@ int VideoStreamColourTrackingNewControl()
 		return -1;
 	}
 
-	cvNamedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
-	cvNamedWindow("Drawing Control", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow(kControlWindow, CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	cvNamedWindow(kDrawingControlWindow, CV_WINDOW_AUTOSIZE);
 	int iLowH = 147;
 	int iHighH = 179;
 
@@ -185,20 +197,17 @@ int VideoStreamColourTrackingNewControl()
 	int clearScreen = 0;
 
 	//Create trackbars in "Control" window
-	createTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-	createTrackbar("HighH", "Control", &iHighH, 179);
+	createTrackbar("LowH", kControlWindow, &iLowH, 179); //Hue (0 - 179)
+	createTrackbar("HighH", kControlWindow, &iHighH, 179);
 
-	createTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-	createTrackbar("HighS", "Control", &iHighS, 255);
+	createTrackbar("LowS", kControlWindow, &iLowS, 255); //Saturation (0 - 255)
+	createTrackbar("HighS", kControlWindow, &iHighS, 255);
 
-	createTrackbar("LowV", "Control", &iLowV, 255);//Value (0 - 255)
-	createTrackbar("HighV", "Control", &iHighV, 255);
+	createTrackbar("LowV", kControlWindow, &iLowV, 255);//Value (0 - 255)
+	createTrackbar("HighV", kControlWindow, &iHighV, 255);
 
-	createTrackbar("HighV", "Control", &iHighV, 255);
-	createTrackbar("HighV", "Control", &iHighV, 255);
-
-	createTrackbar("Draw", "Drawing Control", &draw, 1);
-	createTrackbar("Clear", "Drawing Control", &clearScreen, 1);
+	createTrackbar("Draw", kDrawingControlWindow, &draw, 1);
+	createTrackbar("Clear", kDrawingControlWindow, &clearScreen, 1);
 
 	int iLastX = -1;
 	int iLastY = -1;
@@ -237,13 +246,7 @@ int VideoStreamColourTrackingNewControl()
 
 		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
 
-																									  //morphological opening (removes small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-
-		//morphological closing (removes small holes from the foreground)
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+		CleanThresholdMask(imgThresholded);
 
 		//Calculate the moments of the thresholded image
 		Moments oMoments = moments(imgThresholded);
@@ -252,8 +255,8 @@ int VideoStreamColourTrackingNewControl()
 		double dM10 = oMoments.m10;
 		double dArea = oMoments.m00;
 
-		// if the area <= 100000, I consider that the there are no object in the image and it's because of the noise, the area is not zero 
-		if (dArea > 1000000)
+		// Ignore tiny regions caused by noise.
+		if (dArea > kTrackingAreaThreshold)
 		{
 			//calculate the position of the ball
 			int posX = dM10 / dArea;
@@ -296,7 +299,7 @@ int VideoStreamColourTrackingNewControl()
 		wait(0.5);
 	}
 
-	ofstream waypointsFile("waypoints.txt");
+	ofstream waypointsFile(kWaypointFile);
 	if (waypointsFile.is_open())
 	{
 		for (int i = 0; i < waypoints.size(); i++)
@@ -310,7 +313,7 @@ int VideoStreamColourTrackingNewControl()
 }
 int VideoStreamColourDetection()
 {
-	VideoCapture cap(1); //capture the video from web cam
+	VideoCapture cap(kCameraIndex); //capture the video from web cam
 	//VideoCapture cap2(0);
 	if (!cap.isOpened())// || !cap2.isOpened())  // if not success, exit program
 	{
@@ -318,7 +321,7 @@ int VideoStreamColourDetection()
 		return -1;
 	}
 
-	namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	namedWindow(kControlWindow, CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
 	int iLowH = 0;
 	int iHighH = 179;
@@ -330,14 +333,14 @@ int VideoStreamColourDetection()
 	int iHighV = 255;
 
 	//Create trackbars in "Control" window
-	cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-	cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+	cvCreateTrackbar("LowH", kControlWindow, &iLowH, 179); //Hue (0 - 179)
+	cvCreateTrackbar("HighH", kControlWindow, &iHighH, 179);
 
-	cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-	cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+	cvCreateTrackbar("LowS", kControlWindow, &iLowS, 255); //Saturation (0 - 255)
+	cvCreateTrackbar("HighS", kControlWindow, &iHighS, 255);
 
-	cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
-	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+	cvCreateTrackbar("LowV", kControlWindow, &iLowV, 255); //Value (0 - 255)
+	cvCreateTrackbar("HighV", kControlWindow, &iHighV, 255);
 
 	while (true)
 	{
@@ -357,13 +360,7 @@ int VideoStreamColourDetection()
 		cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV
 		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
 
-		//morphological opening (remove small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-
-		//morphological closing (fill small holes in the foreground)
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+		CleanThresholdMask(imgThresholded);
 
 		bitwise_and(imgOriginal, imgOriginal, imgMasked, imgThresholded);
 
@@ -388,7 +385,7 @@ int StaticPhotoColourDetection()
 
 	Mat img = imread("C:/Users/Ahmed/Documents/University of Waterloo/FYDP/Test Photos/resized.jpg", CV_LOAD_IMAGE_UNCHANGED);
 	Mat imgOriginal = img;
-	namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	namedWindow(kControlWindow, CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
 	int iLowH = 0;
 	int iHighH = 179;
@@ -400,14 +397,14 @@ int StaticPhotoColourDetection()
 	int iHighV = 65;
 
 	//Create trackbars in "Control" window
-	cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-	cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+	cvCreateTrackbar("LowH", kControlWindow, &iLowH, 179); //Hue (0 - 179)
+	cvCreateTrackbar("HighH", kControlWindow, &iHighH, 179);
 
-	cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-	cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+	cvCreateTrackbar("LowS", kControlWindow, &iLowS, 255); //Saturation (0 - 255)
+	cvCreateTrackbar("HighS", kControlWindow, &iHighS, 255);
 
-	cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
-	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+	cvCreateTrackbar("LowV", kControlWindow, &iLowV, 255); //Value (0 - 255)
+	cvCreateTrackbar("HighV", kControlWindow, &iHighV, 255);
 
 	Mat imgHSV;
 	Mat imgThresholded;
@@ -417,13 +414,7 @@ int StaticPhotoColourDetection()
 		cvtColor(imgOriginal, imgHSV, COLOR_BGR2HSV); //Convert the captured frame from BGR to HSV		
 
 		inRange(imgHSV, Scalar(iLowH, iLowS, iLowV), Scalar(iHighH, iHighS, iHighV), imgThresholded); //Threshold the image
-																						  //morphological opening (remove small objects from the foreground)
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-
-		//morphological closing (fill small holes in the foreground)
-		dilate(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
-		erode(imgThresholded, imgThresholded, getStructuringElement(MORPH_ELLIPSE, Size(5, 5)));
+		CleanThresholdMask(imgThresholded);
 
 		Mat imgFlooded = imgThresholded.clone();
 		floodFill(imgFlooded, cv::Point(0, 0), Scalar(255));
@@ -442,7 +433,7 @@ int StaticPhotoColourDetection()
 		int posX = 0;
 		int posY = 0;
 
-		if (dArea > 10000)
+		if (dArea > kStaticAreaThreshold)
 		{
 			//calculate the center of the deteceted object
 			posX = dM10 / dArea;
@@ -615,7 +606,7 @@ int StaticPhotoCircleDetection()
 	Mat img = imread("C:/Users/Ahmed/Documents/University of Waterloo/FYDP/Test Photos/board.jpg", CV_LOAD_IMAGE_UNCHANGED);
 	Mat imgOriginal = img;
 	Mat imgThresholded;
-	namedWindow("Control", CV_WINDOW_AUTOSIZE); //create a window called "Control"
+	namedWindow(kControlWindow, CV_WINDOW_AUTOSIZE); //create a window called "Control"
 
 	int iLowH = 0;
 	int iHighH = 179;
@@ -627,14 +618,14 @@ int StaticPhotoCircleDetection()
 	int iHighV = 255;
 
 	//Create trackbars in "Control" window
-	cvCreateTrackbar("LowH", "Control", &iLowH, 179); //Hue (0 - 179)
-	cvCreateTrackbar("HighH", "Control", &iHighH, 179);
+	cvCreateTrackbar("LowH", kControlWindow, &iLowH, 179); //Hue (0 - 179)
+	cvCreateTrackbar("HighH", kControlWindow, &iHighH, 179);
 
-	cvCreateTrackbar("LowS", "Control", &iLowS, 255); //Saturation (0 - 255)
-	cvCreateTrackbar("HighS", "Control", &iHighS, 255);
+	cvCreateTrackbar("LowS", kControlWindow, &iLowS, 255); //Saturation (0 - 255)
+	cvCreateTrackbar("HighS", kControlWindow, &iHighS, 255);
 
-	cvCreateTrackbar("LowV", "Control", &iLowV, 255); //Value (0 - 255)
-	cvCreateTrackbar("HighV", "Control", &iHighV, 255);
+	cvCreateTrackbar("LowV", kControlWindow, &iLowV, 255); //Value (0 - 255)
+	cvCreateTrackbar("HighV", kControlWindow, &iHighV, 255);
 
 	Mat src, src_gray;
 	src = imgOriginal;
