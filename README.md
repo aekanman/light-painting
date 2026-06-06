@@ -57,3 +57,7 @@ The system combines two environments:
 
 - The computer vision code was built around OpenCV and includes both CMake and Visual Studio project artifacts.
 - The arm movement code depends on FANUC FRRobot COM libraries and FANUC 200iD robot/controller hardware access.
+
+
+## License
+MIT © [Atakan Efe Kanman](http://atakanefekanman.com)
